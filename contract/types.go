@@ -93,11 +93,13 @@ type OwnerResponse struct {
 	Owner string `json:"owner"`
 }
 
-// InfoResponse for token info queries
+// InfoResponse for token info queries.
+// Decimals is encoded as a decimal string so consumers (e.g. the DEX router's
+// register_token) that expect string-typed numerics can parse it directly.
 type InfoResponse struct {
 	Name      string   `json:"name"`
 	Symbol    string   `json:"symbol"`
-	Decimals  int      `json:"decimals"`
+	Decimals  string   `json:"decimals"`
 	MaxSupply *big.Int `json:"-"`
 }
 

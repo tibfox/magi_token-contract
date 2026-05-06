@@ -26,7 +26,7 @@ func TestTokenLifecycle(t *testing.T) {
 	CallContract(t, ct, "getOwner", []byte(""), nil, "hive:anyone", true, uint(100_000_000), `{"owner":"hive:tibfox"}`)
 	CallContract(t, ct, "totalSupply", []byte(""), nil, "hive:anyone", true, uint(100_000_000), `{"totalSupply":"0"}`)
 	CallContract(t, ct, "isPaused", []byte(""), nil, "hive:anyone", true, uint(100_000_000), `{"paused":false}`)
-	CallContract(t, ct, "getInfo", []byte(""), nil, "hive:anyone", true, uint(100_000_000), `{"name":"Magi Token","symbol":"MAGI","decimals":3,"maxSupply":"1000000000"}`)
+	CallContract(t, ct, "getInfo", []byte(""), nil, "hive:anyone", true, uint(100_000_000), `{"name":"Magi Token","symbol":"MAGI","decimals":"3","maxSupply":"1000000000"}`)
 
 	// =========================================
 	// PHASE 2: Initial Token Distribution

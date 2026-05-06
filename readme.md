@@ -61,7 +61,7 @@ All amount fields (balances, supply, allowances) are encoded as **decimal string
 | `totalSupply` | -                                      | `{"totalSupply": string}`    |
 | `allowance`   | `{"owner": string, "spender": string}` | `{"allowance": string}`      |
 | `getOwner`    | -                                      | `{"owner": string}`          |
-| `getInfo`     | -                                      | `{"name", "symbol", "decimals", "maxSupply": string}` |
+| `getInfo`     | -                                      | `{"name": string, "symbol": string, "decimals": string, "maxSupply": string}` |
 | `isPaused`    | -                                      | `{"paused": bool}`           |
 
 ## Events
