@@ -3,6 +3,7 @@ package main
 import (
 	"magi_token/sdk"
 	"math/big"
+	"strconv"
 
 	"github.com/CosmWasm/tinyjson/jlexer"
 )
@@ -543,7 +544,7 @@ func GetInfo(_ *string) *string {
 	return jsonResponse(InfoResponse{
 		Name:      getTokenName(),
 		Symbol:    getTokenSymbol(),
-		Decimals:  int(getTokenDecimals()),
+		Decimals:  strconv.Itoa(int(getTokenDecimals())),
 		MaxSupply: getMaxSupply(),
 	})
 }

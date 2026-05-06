@@ -19,7 +19,7 @@ func TestInitWithLargeMaxSupply(t *testing.T) {
 	CallContract(t, ct, "init", payload, nil, ownerAddress, true, uint(100_000_000), "")
 	// Verify info returns the large maxSupply as string
 	CallContract(t, ct, "getInfo", []byte(""), nil, "hive:anyone", true, uint(100_000_000),
-		`{"name":"Big Token","symbol":"BIG","decimals":18,"maxSupply":"100000000000000000000000000000"}`)
+		`{"name":"Big Token","symbol":"BIG","decimals":"18","maxSupply":"100000000000000000000000000000"}`)
 }
 
 func TestMintAndTransferLargeAmounts(t *testing.T) {

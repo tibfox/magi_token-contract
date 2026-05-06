@@ -712,7 +712,7 @@ func (v InfoResponse) MarshalTinyJSON(out *jwriter.Writer) {
 	out.RawString(`,"symbol":`)
 	out.String(v.Symbol)
 	out.RawString(`,"decimals":`)
-	out.Int(v.Decimals)
+	out.String(v.Decimals)
 	out.RawString(`,"maxSupply":`)
 	if v.MaxSupply != nil {
 		out.String(v.MaxSupply.String())

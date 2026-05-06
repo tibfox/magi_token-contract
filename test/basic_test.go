@@ -168,7 +168,7 @@ func TestGetInfo(t *testing.T) {
 	ct := SetupContractTest()
 	CallContract(t, ct, "init", DefaultInitPayload, nil, ownerAddress, true, uint(100_000_000), "")
 	// Get token info
-	CallContract(t, ct, "getInfo", []byte(""), nil, "hive:anyone", true, uint(100_000_000), `{"name":"Magi Token","symbol":"MAGI","decimals":3,"maxSupply":"1000000000"}`)
+	CallContract(t, ct, "getInfo", []byte(""), nil, "hive:anyone", true, uint(100_000_000), `{"name":"Magi Token","symbol":"MAGI","decimals":"3","maxSupply":"1000000000"}`)
 }
 
 // --- Integration Test - Full Flow ---
