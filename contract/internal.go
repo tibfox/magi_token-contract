@@ -2,6 +2,7 @@ package main
 
 import (
 	"magi_token/sdk"
+	"magi_token/tokencore"
 	"math/big"
 
 	"github.com/CosmWasm/tinyjson/jwriter"
@@ -151,10 +152,10 @@ func getTokenSymbol() string {
 // getTokenDecimals retrieves the token decimals from state.
 func getTokenDecimals() uint8 {
 	d := sdk.StateGetObject("token_decimals")
-	if d == nil || *d == "" {
+	if d == nil {
 		return 0
 	}
-	return (*d)[0]
+	return tokencore.DecodeDecimals(*d)
 }
 
 // getMaxSupply retrieves the max supply from state.
