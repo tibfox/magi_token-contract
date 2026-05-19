@@ -2,6 +2,7 @@ package main
 
 import (
 	"magi_token/sdk"
+	"magi_token/tokencore"
 	"math/big"
 	"strconv"
 
@@ -29,11 +30,9 @@ func Init(payload *string) *string {
 	// Only contract owner can initialize
 	owner := sdk.GetEnvKey("contract.owner")
 	caller := sdk.GetEnvKey("msg.caller")
-	if caller == nil {
-		sdk.Abort("Caller required")
-	}
-	if *caller != *owner {
-		sdk.Abort("Only contract owner can initialize")
+	// TOKEN-01: nil-check both owner and caller before any dereference.
+	if msg, ok := tokencore.CheckInitAuth(owner, caller); !ok {
+		sdk.Abort(msg)
 	}
 
 	// Parse payload
@@ -63,11 +62,14 @@ func Init(payload *string) *string {
 	if p.MaxSupply == nil || p.MaxSupply.Sign() == 0 {
 		sdk.Abort("MaxSupply must be greater than 0")
 	}
+	if p.Decimals > 18 {
+		sdk.Abort("decimals must be <= 18")
+	}
 
 	// Store token properties
 	sdk.StateSetObject("token_name", p.Name)
 	sdk.StateSetObject("token_symbol", p.Symbol)
-	sdk.StateSetObject("token_decimals", string(p.Decimals))
+	sdk.StateSetObject("token_decimals", tokencore.EncodeDecimals(p.Decimals))
 	sdk.StateSetObject("token_max_supply", string(bigIntToBytes(p.MaxSupply)))
 
 	// Initialize contract state
