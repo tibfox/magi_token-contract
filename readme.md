@@ -180,6 +180,23 @@ To prevent race conditions (front-running attacks), use `increaseAllowance` and 
 - Allowance management (`approve`, `increaseAllowance`, `decreaseAllowance`) works even when contract is paused
 - Actual transfers (`transfer`, `transferFrom`) are blocked when paused
 
+## SDK
+
+`sdk/` is vendored **verbatim** from
+[vsc-eco/go-contract-template](https://github.com/vsc-eco/go-contract-template)
+and is byte-identical to the copy in every other Magi contract repo. Do not
+edit it here — change it in the template and re-sync:
+
+```bash
+/path/to/go-contract-template/scripts/sync-sdk.sh .
+```
+
+The SDK exposes the host functions the node publishes in
+`modules/wasm/sdk/sdk.go`. Which of them this repo's tests can actually execute
+is set by the `replace vsc-node` pin in `go.mod`; a wrapper whose host function
+is absent from that node makes the module fail to instantiate, so bump the pin
+before calling a newer one.
+
 ## Build
 
 ```bash

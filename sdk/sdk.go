@@ -1,67 +1,28 @@
 package sdk
 
+// NOTE: this package deliberately imports nothing from its own module, so the
+// whole sdk/ directory is byte-identical across every contract repo (see
+// scripts/sync-sdk.sh). The custom-GC runtime package is blank-imported by the
+// contract's main package instead.
 import (
 	"encoding/hex"
 	"strconv"
-	_ "magi_token/runtime"
 
 	"github.com/CosmWasm/tinyjson"
 )
 
-//go:wasmimport sdk console.log
-func log(s *string) *string
+// ===================================
+// Event logs
+// ===================================
 
+// Emit a log to the contract output
 func Log(s string) {
 	log(&s)
 }
 
-//go:wasmimport sdk db.set_object
-func stateSetObject(key *string, value *string) *string
-
-//go:wasmimport sdk db.get_object
-func stateGetObject(key *string) *string
-
-//go:wasmimport sdk db.rm_object
-func stateDeleteObject(key *string) *string
-
-//go:wasmimport sdk system.get_env
-func getEnv(arg *string) *string
-
-//go:wasmimport sdk system.get_env_key
-func getEnvKey(arg *string) *string
-
-//go:wasmimport sdk hive.get_balance
-func getBalance(arg1 *string, arg2 *string) *string
-
-//go:wasmimport sdk hive.draw
-func hiveDraw(arg1 *string, arg2 *string) *string
-
-//go:wasmimport sdk hive.transfer
-func hiveTransfer(arg1 *string, arg2 *string, arg3 *string) *string
-
-//go:wasmimport sdk hive.withdraw
-func hiveWithdraw(arg1 *string, arg2 *string, arg3 *string) *string
-
-//go:wasmimport sdk contracts.read
-func contractRead(contractId *string, key *string) *string
-
-//go:wasmimport sdk contracts.call
-func contractCall(contractId *string, method *string, payload *string, options *string) *string
-
-//go:wasmimport sdk tss.create_key
-func tssCreateKey(keyId *string, algo *string) *string
-
-//go:wasmimport sdk tss.sign_key
-func tssSignKey(keyId *string, msgId *string) *string
-
-//go:wasmimport sdk tss.get_key
-func tssGetKey(keyId *string) *string
-
-//go:wasmimport env abort
-func abort(msg, file *string, line, column *int32)
-
-//go:wasmimport env revert
-func revert(msg, symbol *string)
+// ===================================
+// Abort/Revert Execution
+// ===================================
 
 // Aborts the contract execution
 func Abort(msg string) {
@@ -75,9 +36,18 @@ func Revert(msg string, symbol string) {
 	revert(&msg, &symbol)
 }
 
+// ===================================
+// Persistent State
+// ===================================
+
 // Set a value by key in the contract state
 func StateSetObject(key string, value string) {
 	stateSetObject(&key, &value)
+}
+
+// Set a uint64 value by key in the contract state
+func StateSetU64(key string, value uint64) {
+	StateSetObject(key, string(u64ToBytes(value)))
 }
 
 // Get a value by key from the contract state
@@ -85,10 +55,42 @@ func StateGetObject(key string) *string {
 	return stateGetObject(&key)
 }
 
+// Get a uint64 value by key from the contract state
+func StateGetU64(key string, value uint64) uint64 {
+	val := StateGetObject(key)
+	if val == nil || *val == "" {
+		return 0
+	}
+	return bytesToU64([]byte(*val))
+}
+
 // Delete or unset a value by key in the contract state
 func StateDeleteObject(key string) {
 	stateDeleteObject(&key)
 }
+
+// ===================================
+// Ephemeral State
+// ===================================
+
+// Set a value by key in the ephemeral contract state
+func EphemStateSetObject(key string, value string) {
+	ephemStateSetObject(&key, &value)
+}
+
+// Get a value by key from the ephemeral contract state
+func EphemStateGetObject(contractId string, key string) *string {
+	return ephemStateGetObject(&contractId, &key)
+}
+
+// Delete or unset a value by key in the ephemeral contract state
+func EphemStateDeleteObject(key string) {
+	ephemStateDeleteObject(&key)
+}
+
+// ===================================
+// Contract Env
+// ===================================
 
 // Get current execution environment variables
 func GetEnv() Env {
@@ -126,6 +128,39 @@ func GetEnvKey(key string) *string {
 	return getEnvKey(&key)
 }
 
+// ===================================
+// System
+// ===================================
+
+// VerifyAddress classifies an address on the current network. Returns the
+// address domain — one of "user:hive", "user:evm", "user:btc", "contract",
+// "system", or "unknown" — so a contract can validate a recipient before
+// crediting it. The network (mainnet vs testnet) is taken from the host env.
+func VerifyAddress(address string) string {
+	return *verifyAddress(&address)
+}
+
+// SystemCall invokes another sdk method by "namespace.method" name with a
+// single JSON-encoded argument (e.g. `{"arg0":"..."}`), returning the callee's
+// result wrapped as `{"result":"..."}`. A generic escape hatch for host
+// methods without a dedicated wrapper.
+func SystemCall(name string, args string) *string {
+	return systemCall(&name, &args)
+}
+
+// PendulumApplySwapFees invokes the Magi pendulum fee engine for an HBD-paired
+// pool swap. Input and output are JSON-encoded per the contract integration
+// spec (PendulumSwapFeeInput / PendulumSwapFeeOutput) — the contract owns those
+// types; this is a thin marshalling shim. On any host error the runtime aborts
+// the contract, so this only returns on success.
+func PendulumApplySwapFees(input string) string {
+	return *pendulumApplySwapFees(&input)
+}
+
+// ===================================
+// Ledgers
+// ===================================
+
 // Get balance of an account
 func GetBalance(address Address, asset Asset) int64 {
 	addr := address.String()
@@ -161,6 +196,10 @@ func HiveWithdraw(to Address, amount int64, asset Asset) {
 	hiveWithdraw(&toaddr, &amt, &as)
 }
 
+// ===================================
+// Intercontract
+// ===================================
+
 // Get a value by key from the contract state of another contract
 func ContractStateGet(contractId string, key string) *string {
 	return contractRead(&contractId, &key)
@@ -179,7 +218,12 @@ func ContractCall(contractId string, method string, payload string, options *Con
 	return contractCall(&contractId, &method, &payload, &optStr)
 }
 
-// Request a TSS key to be created. Algo must be either ecdsa or eddsa.
+// ===================================
+// TSS
+// ===================================
+
+// TssCreateKey creates a key with the maximum epoch lifespan of 365 epochs.
+// Deprecated: use TssCreateKeyForEpochs to specify a lifespan.
 func TssCreateKey(keyId string, algo string) string {
 	if algo != "ecdsa" && algo != "eddsa" {
 		Abort("algo must be ecdsa or eddsa")
@@ -188,14 +232,29 @@ func TssCreateKey(keyId string, algo string) string {
 	return *tssCreateKey(&keyId, &algo)
 }
 
+// TssCreateKeyForEpochs creates a key that expires after the given number of epochs.
+func TssCreateKeyForEpochs(keyId string, algo string, epochs uint64) string {
+	if algo != "ecdsa" && algo != "eddsa" {
+		Abort("algo must be ecdsa or eddsa")
+	}
+	epochsStr := strconv.FormatUint(epochs, 10)
+	return *tssV2CreateKey(&keyId, &algo, &epochsStr)
+}
+
+// TssRenewKey extends the expiry of a key owned by this contract by additionalEpochs.
+// The key must be active or deprecated. Returns "renewed" on success.
+func TssRenewKey(keyId string, additionalEpochs uint64) string {
+	epochsStr := strconv.FormatUint(additionalEpochs, 10)
+	return *tssRenewKey(&keyId, &epochsStr)
+}
+
 // Get details of a TSS key. Returns a comma-separated string consists of status, public key and algo.
 func TssGetKey(keyId string) string {
 	return *tssGetKey(&keyId)
 }
 
 // Request a digest to be signed by the TSS key.
-func TssSignKey(keyId string, bytes []byte) {
+func TssSignKey(keyId string, bytes []byte) string {
 	byteStr := hex.EncodeToString(bytes)
-
-	tssSignKey(&keyId, &byteStr)
+	return *tssSignKey(&keyId, &byteStr)
 }

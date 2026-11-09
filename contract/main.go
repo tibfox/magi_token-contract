@@ -1,6 +1,12 @@
 package main
 
-import "magi_token/sdk"
+import (
+	// the custom-GC runtime must be linked in by the main package (the sdk
+	// package stays free of module-local imports so it can be copied verbatim)
+	_ "magi_token/runtime"
+
+	"magi_token/sdk"
+)
 
 // ========================================
 // MAGI Token Contract (ERC-20 Based)
